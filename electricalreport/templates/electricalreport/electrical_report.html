@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de planta eléctrica - {{ report.work_order.code }}</title>
+  <style>
+    @page { size: A4 portrait; margin: 9mm 11mm 8mm 11mm; }
+    * { box-sizing: border-box; }
+    body { color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 7.4pt; margin: 0; }
+    .header { width: 100%; margin-bottom: 4mm; }
+    .header td { vertical-align: middle; }
+    .brand-cell { width: 42%; }
+    .contact-cell { width: 58%; text-align: right; }
+    .brand-mark { color: #123e73; display: inline-block; font-size: 25pt; font-weight: bold; line-height: .8; margin-right: 3mm; vertical-align: middle; }
+    .brand-name { color: #123e73; display: inline-block; font-size: 8pt; font-weight: bold; line-height: 1.15; text-align: left; vertical-align: middle; }
+    .company-line { margin: 0 0 1.1mm; }
+    .contact-cell strong { color: #123e73; font-size: 8.4pt; }
+    .title { border: 1px solid #123e73; color: #123e73; font-size: 13pt; font-weight: bold; letter-spacing: .3pt; padding: 3.2mm 2mm; text-align: center; }
+    table { border-collapse: collapse; width: 100%; }
+    .info-table { margin-bottom: 2.2mm; table-layout: fixed; }
+    .info-table td { border: .7px solid #5f6f82; height: 5.6mm; padding: 1mm 1.3mm; vertical-align: middle; }
+    .label { background: #eaf1f8; color: #1b2f46; font-weight: bold; white-space: nowrap; }
+    .info-table .label-a { width: 13%; }
+    .info-table .value-a { width: 20%; }
+    .info-table .label-b { width: 16%; }
+    .info-table .value-b { width: 24%; }
+    .info-table .label-c { width: 10%; }
+    .info-table .value-c { width: 17%; }
+    .inspection-table { table-layout: fixed; }
+    .inspection-table th, .inspection-table td { border: .7px solid #5f6f82; padding: .9mm 1.1mm; vertical-align: middle; }
+    .inspection-table th { background: #eaf1f8; color: #1b2f46; font-size: 7.3pt; font-weight: bold; height: 7.5mm; text-align: center; }
+    .inspection-table .check-name { font-size: 6.6pt; font-weight: bold; text-align: center; width: 43%; }
+    .inspection-table .check-status { font-size: 7.5pt; font-weight: bold; text-align: center; width: 12%; }
+    .inspection-table .check-observation { width: 45%; }
+    .ok { color: #0f6b3a; }
+    .no { color: #a02121; }
+    .observations-title { color: #123e73; font-size: 7.4pt; font-weight: bold; margin: 3mm 0 1mm; }
+    .observations { border-bottom: .7px solid #5f6f82; min-height: 12mm; padding: 1mm 0; }
+    .signatures { margin-top: 5mm; table-layout: fixed; }
+    .signatures td { padding: 0 7mm; text-align: center; vertical-align: bottom; width: 50%; }
+    .signature-box { height: 16mm; margin: 0 auto; position: relative; }
+    .signature-box img { height: 15mm; max-width: 52mm; object-fit: contain; }
+    .signature-line { border-top: .8px solid #5f6f82; }
+    .signature-label { color: #123e73; font-weight: bold; margin-top: 1mm; }
+    .signature-name { margin-top: .7mm; }
+    .footer { border-top: 1px solid #123e73; color: #123e73; font-size: 6.2pt; font-weight: bold; margin-top: 5mm; padding-top: 2mm; text-align: center; }
+    .footer p { margin: .7mm 0; }
+  </style>
+</head>
+<body>
+  <table class="header">
+    <tr>
+      <td class="brand-cell">
+        <span class="brand-mark">A&amp;C</span>
+        <span class="brand-name">SOLUCIONES<br>HIDROELÉCTRICAS SAS</span>
+      </td>
+      <td class="contact-cell">
+        <p class="company-line"><strong>Nit. 901269341-0</strong></p>
+        <p class="company-line">3168950832 / 3155763894</p>
+        <p class="company-line">aycsolucioneshidroelectricas@gmail.com</p>
+        <p class="company-line">2830205 - Calle 23 No. 28 - 11</p>
+      </td>
+    </tr>
+  </table>
+
+  <div class="title">MANTENIMIENTO DE EQUIPOS</div>
+
+  <table class="info-table">
+    <tr><td class="label label-a">FECHA</td><td class="value-a">{{ report.report_date|date:"d/m/Y" }}</td><td class="label label-b">ENCARGADO(A):</td><td class="value-b" colspan="3">{{ report.responsible_name }}</td></tr>
+    <tr><td class="label label-a">CLIENTE</td><td class="value-a">{{ customer.name }}</td><td class="label label-b">DIRECCIÓN:</td><td class="value-b" colspan="3">{{ customer.address }}</td></tr>
+    <tr><td class="label label-a">CIUDAD</td><td class="value-a">{{ customer.city }}</td><td class="label label-b">TELÉFONO:</td><td class="value-b" colspan="3">{{ customer.phone }}</td></tr>
+    <tr><td class="label label-a">GENERADOR:</td><td class="value-a">{{ report.generator }}</td><td class="label label-b">MARCA:</td><td class="value-b">{{ report.brand }}</td><td class="label label-c">KVA:</td><td class="value-c">{{ report.kva }}</td></tr>
+    <tr><td class="label label-a">MOTOR:</td><td class="value-a">{{ report.motor }}</td><td class="label label-b">MODELO:</td><td class="value-b">{{ report.model_name }}</td><td class="label label-c">SERIE:</td><td class="value-c">{{ report.serial_number }}</td></tr>
+  </table>
+
+  <table class="inspection-table">
+    <thead><tr><th class="check-name">VERIFICACIÓN</th><th class="check-status">VISTO</th><th class="check-observation">OBSERVACIONES</th></tr></thead>
+    <tbody>
+      {% for item in inspection_items %}
+      <tr><td class="check-name">{{ item.label }}</td><td class="check-status {% if item.status == 'OK' %}ok{% else %}no{% endif %}">{{ item.status }}</td><td class="check-observation">{{ item.observation }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="observations-title">OBSERVACIONES Y RECOMENDACIONES:</div>
+  <div class="observations">{{ report.general_observations|linebreaksbr }}</div>
+
+  <table class="signatures">
+    <tr>
+      <td><div class="signature-box">{% if report.technician_signature %}<img src="{{ report.technician_signature }}" alt="Firma del técnico">{% endif %}</div><div class="signature-line"></div><div class="signature-label">TÉCNICO</div><div class="signature-name">{{ report.technician_name }}</div></td>
+      <td><div class="signature-box">{% if report.recipient_signature %}<img src="{{ report.recipient_signature }}" alt="Firma del recibido">{% endif %}</div><div class="signature-line"></div><div class="signature-label">RECIBÍ</div><div class="signature-name">{{ report.received_by }}</div></td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <p>A&amp;C SOLUCIONES HIDROELÉCTRICAS SAS</p>
+    <p>MONTAJES Y MANTENIMIENTO DE EQUIPOS DE PRESIÓN - PLANTAS ELÉCTRICAS DE EMERGENCIA</p>
+    <p>SISTEMA DE REDES CONTRA INCENDIO - ADECUACIONES ELÉCTRICAS</p>
+  </div>
+</body>
+</html>
