@@ -1,0 +1,33 @@
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+from .pdf import generate_electrical_report_pdf
+
+
+def send_electrical_report_email(report):
+    """Envía el informe como adjunto sin guardarlo en el sistema de archivos."""
+    customer = report.work_order.customer
+    if not customer.email:
+        raise ValueError("El cliente no tiene un correo electrónico registrado.")
+
+    context = {
+        "nombre": customer.name,
+        "code": report.work_order.code,
+        "frontend_url": settings.FRONTEND_URL,
+    }
+    html_content = render_to_string("electricalreport/email_report.html", context)
+    message = EmailMultiAlternatives(
+        subject=f"Informe de planta eléctrica - {report.work_order.code}",
+        body=strip_tags(html_content),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[customer.email],
+    )
+    message.attach_alternative(html_content, "text/html")
+    message.attach(
+        f"{report.work_order.code}-planta-electrica.pdf",
+        generate_electrical_report_pdf(report),
+        "application/pdf",
+    )
+    message.send()
