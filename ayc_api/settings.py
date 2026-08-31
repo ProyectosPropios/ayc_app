@@ -5,15 +5,25 @@ import cloudinary
 import dj_database_url
 from celery.schedules import crontab
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-local-development-key')
-DEBUG = env.bool('DEBUG', default=True)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+DEBUG = env.bool('DEBUG', default=not bool(RENDER_EXTERNAL_HOSTNAME))
+
+SECRET_KEY = env('SECRET_KEY', default='')
+if not SECRET_KEY and not DEBUG:
+    raise ImproperlyConfigured('SECRET_KEY must be configured when DEBUG=0')
+SECRET_KEY = SECRET_KEY or 'django-insecure-local-development-key'
+
+default_allowed_hosts = ['localhost', '127.0.0.1']
+if RENDER_EXTERNAL_HOSTNAME:
+    default_allowed_hosts.append(RENDER_EXTERNAL_HOSTNAME)
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=default_allowed_hosts)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -42,6 +52,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -71,7 +82,10 @@ WSGI_APPLICATION = 'ayc_api.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=env('URL_DB', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}')
+        default=env(
+            'DATABASE_URL',
+            default=env('URL_DB', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+        )
     )
 }
 
@@ -109,8 +123,9 @@ TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -124,11 +139,27 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'no-reply@localhost')
-FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')
+default_frontend_url = (
+    f'https://{RENDER_EXTERNAL_HOSTNAME}'
+    if RENDER_EXTERNAL_HOSTNAME
+    else 'http://localhost:5173'
+)
+FRONTEND_URL = env('FRONTEND_URL', default=default_frontend_url)
 
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=["http://localhost:5173"])
-CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=["http://localhost:5173"])
+default_frontend_origins = [default_frontend_url]
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=default_frontend_origins,
+)
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=default_frontend_origins,
+)
 CORS_ALLOW_CREDENTIALS = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 cloudinary.config(
     cloud_name=env('CLOUD_NAME', default=''),

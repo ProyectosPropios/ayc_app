@@ -10,9 +10,11 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-    ``` 
-    Entorno virtual: .\.venv\Scripts\activate
-    ```
+Entorno virtual:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
 El usuario administrador debe crearse con un correo y una contraseña que cumpla las reglas de seguridad.
 
@@ -89,10 +91,80 @@ El historial funciona aunque Pusher esté desactivado. Para activar la publicaci
 PUSHER_ENABLED=True
 ```
 
+## Ejecución con Docker
+
+Requisitos: Docker Desktop iniciado.
+
+1. Copia `.env.docker.example` como `.env.docker` y completa las claves de
+   PostgreSQL, Django y correo.
+2. Construye y levanta todos los servicios:
+
+```powershell
+docker compose --env-file .env.docker up --build -d
+```
+
+La API queda disponible en `http://localhost:8000`. La base de datos usa el
+volumen `postgres_data`, Redis usa `redis_data` y los procesos de Celery se
+levantan automáticamente. El contenedor `web` ejecuta las migraciones y
+`collectstatic` al iniciar.
+
+Comandos útiles:
+
+```powershell
+docker compose --env-file .env.docker logs -f web
+docker compose --env-file .env.docker ps
+docker compose --env-file .env.docker down
+```
+
+Para borrar también los datos persistentes de PostgreSQL y Redis, ejecuta
+`docker compose down -v` únicamente si deseas reiniciar la instalación desde
+cero.
+
 ## Pruebas
 
 ```powershell
-python manage.py test users customer workorder notification electricalreport
+python manage.py test users customer workorder notification electricalreport pumpingreport
 ```
 
 El informe general queda pendiente de definir sus campos y reglas particulares.
+
+## Despliegue en Render con Docker
+
+El archivo `render.yaml` define el despliegue completo: servicio web de Django,
+worker de Celery, proceso beat, PostgreSQL y Redis administrado para las colas.
+Render construye los servicios web y de Celery desde el mismo `Dockerfile`.
+
+1. Sube el proyecto a un repositorio de GitHub o GitLab. No subas `.env`,
+   `.env.docker` ni credenciales.
+2. En Render abre **New > Blueprint**, conecta el repositorio y selecciona el
+   archivo `render.yaml` de la raiz.
+3. Completa los valores secretos que Render solicite: correo SMTP, URL del
+   frontend, `CORS_ALLOWED_ORIGINS` y `CSRF_TRUSTED_ORIGINS`. Usa la misma
+   `SECRET_KEY` para web, worker y beat cuando Render la solicite para esos
+   servicios.
+4. Espera a que el servicio web pase `GET /health/`. La respuesta esperada es
+   `{"status":"ok"}`.
+5. En el Shell del servicio web crea el primer administrador:
+
+```text
+python manage.py createsuperuser
+```
+
+El Blueprint usa PostgreSQL y conecta automaticamente la API y Celery a sus
+servicios internos. Redis esta configurado con `noeviction` y persistencia,
+porque se usa como broker de tareas. Los procesos web, worker, beat y Redis
+persistente requieren el plan de Render correspondiente; la base de datos queda
+en el plan gratuito para esta etapa de pruebas.
+
+Los siguientes despliegues se hacen con un `push`. El Blueprint usa
+`autoDeployTrigger: checksPass`, por lo que Render espera las pruebas de
+GitHub antes de construir una nueva version. Las migraciones se ejecutan en
+`preDeployCommand`; si se agrega una migracion que falla, el despliegue no debe
+pasar a trafico.
+
+Para probar la suite local sin depender del usuario PostgreSQL del `.env`:
+
+```powershell
+$env:URL_DB = "sqlite:///C:/ruta/ayc_api/ci-test.sqlite3"
+\.venv\Scripts\python.exe manage.py test
+```
