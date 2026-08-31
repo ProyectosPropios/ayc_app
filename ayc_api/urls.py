@@ -15,12 +15,28 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.db import connection
+from django.db.utils import OperationalError
+from django.http import JsonResponse
 from django.urls import include, path
 
+
+def health_check(request):
+    """Endpoint used by Render to verify that the API and database are ready."""
+    try:
+        connection.ensure_connection()
+    except OperationalError:
+        return JsonResponse({'status': 'error', 'database': 'unavailable'}, status=503)
+    return JsonResponse({'status': 'ok'})
+
+
 urlpatterns = [
+    path('health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('users.urls')),
     path('api/customers/', include('customer.urls')),
     path('api/work-orders/', include('workorder.urls')),
     path('api/notifications/', include('notification.urls')),
+    path('api/electrical-reports/', include('electricalreport.urls')),
+    path('api/pumping-reports/', include('pumpingreport.urls')),
 ]
