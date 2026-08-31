@@ -27,7 +27,6 @@ databases:
     region: ohio
     plan: free
     postgresMajorVersion: "16"
-    diskSizeGB: 1
 
 envVarGroups:
   - name: ayc-free
