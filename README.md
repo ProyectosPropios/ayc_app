@@ -143,11 +143,16 @@ para que no sean necesarios servicios pagos.
    `CSRF_TRUSTED_ORIGINS` en el Dashboard.
 4. Espera a que el servicio web pase `GET /health/`. La respuesta esperada es
    `{"status":"ok"}`.
-5. En el Shell del servicio web crea el primer administrador:
+5. En las variables del servicio web agrega temporalmente
+   `BOOTSTRAP_ADMIN_TOKEN` con un valor largo y secreto.
+6. Ejecuta desde PowerShell o Postman:
 
-```text
-python manage.py createsuperuser
+```powershell
+$body = @{ email = "admin@tuempresa.com"; password = "AdminInicial123!"; first_name = "Admin"; last_name = "Principal" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "https://TU-APP.onrender.com/api/auth/bootstrap-admin/" -Headers @{ "X-Bootstrap-Token" = "TU_TOKEN" } -ContentType "application/json" -Body $body
 ```
+
+7. Elimina `BOOTSTRAP_ADMIN_TOKEN` del Dashboard y vuelve a desplegar.
 
 El Blueprint usa PostgreSQL. `CELERY_ENABLED=0` hace que la API funcione sin
 Redis ni worker; las tareas que se ejecuten durante esta etapa se procesan de
