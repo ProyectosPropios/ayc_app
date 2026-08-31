@@ -99,3 +99,35 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.technician.refresh_from_db()
         self.assertTrue(self.technician.check_password("NuevaTecnico456!"))
+
+
+class BootstrapAdminTests(TestCase):
+    @override_settings(BOOTSTRAP_ADMIN_TOKEN="bootstrap-test-token")
+    def test_bootstrap_creates_first_superuser(self):
+        response = self.client.post(
+            "/api/auth/bootstrap-admin/",
+            {
+                "email": "owner@example.com",
+                "password": "BootstrapAdmin123!",
+                "first_name": "Owner",
+                "last_name": "Admin",
+            },
+            format="json",
+            HTTP_X_BOOTSTRAP_TOKEN="bootstrap-test-token",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.get(email="owner@example.com")
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.check_password("BootstrapAdmin123!"))
+
+    @override_settings(BOOTSTRAP_ADMIN_TOKEN="bootstrap-test-token")
+    def test_bootstrap_requires_token(self):
+        response = self.client.post(
+            "/api/auth/bootstrap-admin/",
+            {"email": "owner@example.com", "password": "BootstrapAdmin123!"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 404)
