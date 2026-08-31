@@ -24,8 +24,9 @@ from .services import send_technician_credentials
 
 def _set_auth_cookies(response, data):
     secure = not settings.DEBUG
-    response.set_cookie("access_token", data["access"], httponly=True, secure=secure, samesite="Lax")
-    response.set_cookie("refresh_token", data["refresh"], httponly=True, secure=secure, samesite="Lax")
+    samesite = settings.AUTH_COOKIE_SAMESITE
+    response.set_cookie("access_token", data["access"], httponly=True, secure=secure, samesite=samesite)
+    response.set_cookie("refresh_token", data["refresh"], httponly=True, secure=secure, samesite=samesite)
 
 
 class LoginView(TokenObtainPairView):
@@ -54,7 +55,7 @@ class RefreshView(TokenRefreshView):
                 response.data["access"],
                 httponly=True,
                 secure=not settings.DEBUG,
-                samesite="Lax",
+                samesite=settings.AUTH_COOKIE_SAMESITE,
             )
         return response
 
