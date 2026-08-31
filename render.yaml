@@ -23,6 +23,14 @@ services:
         value: "1"
       - key: BOOTSTRAP_ADMIN_TOKEN
         sync: false
+      - key: FRONTEND_URL
+        value: https://aycsoluciones.vercel.app
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://aycsoluciones.vercel.app
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://aycsoluciones.vercel.app
+      - key: AUTH_COOKIE_SAMESITE
+        value: None
 
 databases:
   - name: ayc-api-db

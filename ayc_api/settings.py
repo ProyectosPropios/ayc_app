@@ -146,6 +146,7 @@ default_frontend_url = (
 )
 FRONTEND_URL = env('FRONTEND_URL', default=default_frontend_url)
 BOOTSTRAP_ADMIN_TOKEN = env('BOOTSTRAP_ADMIN_TOKEN', default='')
+AUTH_COOKIE_SAMESITE = env('AUTH_COOKIE_SAMESITE', default='Lax' if DEBUG else 'None')
 
 default_frontend_origins = [default_frontend_url]
 CORS_ALLOWED_ORIGINS = env.list(
