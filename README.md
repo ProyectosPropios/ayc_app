@@ -10,6 +10,10 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+    ``` 
+    Entorno virtual: .\.venv\Scripts\activate
+    ```
+
 El usuario administrador debe crearse con un correo y una contraseña que cumpla las reglas de seguridad.
 
 ## Roles
@@ -29,6 +33,7 @@ El usuario administrador debe crearse con un correo y una contraseña que cumpla
 | Órdenes | `/api/work-orders/` |
 | Notificaciones | `/api/notifications/` |
 | Informes de plantas eléctricas | `/api/electrical-reports/` |
+| Informes de bombeo | `/api/pumping-reports/` |
 
 ## Informe de planta eléctrica
 
@@ -58,6 +63,18 @@ POST /api/electrical-reports/{id}/send-email/
 El informe debe estar terminado y firmado. El PDF se adjunta directamente
 desde memoria, por lo que no queda almacenado en el servidor.
 
+El informe de bombeo usa `POST /api/pumping-reports/`. Sus filas de equipos se
+envían en `equipment_rows`, con presión, sumergibles, medida, placa, amperaje,
+temperatura (`normal`/`recalentada`), ruidos (`normal`/`fallas`), humedad
+(`si`/`no`) y conexiones eléctricas (`normal`/`fallas`). También incluye tanque
+hidroneumático, controlador de velocidad, observaciones y firma del técnico.
+Sus PDF y correo se generan con:
+
+```text
+GET /api/pumping-reports/{id}/pdf/
+POST /api/pumping-reports/{id}/send-email/
+```
+
 ## Estados de una orden
 
 `pendiente` → `asignado` → `en_labor` → `realizado` → `terminado`
@@ -78,4 +95,4 @@ PUSHER_ENABLED=True
 python manage.py test users customer workorder notification electricalreport
 ```
 
-Los informes de bombeo, generales y eléctricos se implementarán cuando estén definidos sus campos y reglas particulares.
+El informe general queda pendiente de definir sus campos y reglas particulares.

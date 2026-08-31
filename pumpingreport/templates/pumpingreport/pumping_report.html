@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de bombeo - {{ report.work_order.code }}</title>
+  <style>
+    @page { size: A4 landscape; margin: 8mm 9mm 7mm 9mm; }
+    * { box-sizing: border-box; }
+    body { color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 7pt; margin: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    .header { margin-bottom: 3mm; }
+    .header td { vertical-align: middle; }
+    .brand-cell { width: 35%; }
+    .contact-cell { text-align: right; width: 65%; }
+    .brand-mark { color: #123e73; display: inline-block; font-size: 24pt; font-weight: bold; line-height: .8; margin-right: 3mm; vertical-align: middle; }
+    .brand-name { color: #123e73; display: inline-block; font-size: 8pt; font-weight: bold; line-height: 1.15; text-align: left; vertical-align: middle; }
+    .company-line { margin: 0 0 1mm; }
+    .contact-cell strong { color: #123e73; font-size: 8pt; }
+    .title { border: 1px solid #123e73; color: #123e73; font-size: 13pt; font-weight: bold; letter-spacing: .25pt; margin-bottom: 2.5mm; padding: 3mm; text-align: center; }
+    .info-table { table-layout: fixed; margin-bottom: 2.5mm; }
+    .info-table td { border: .7px solid #5f6f82; height: 6mm; padding: 1mm 1.4mm; vertical-align: middle; }
+    .label { background: #eaf1f8; color: #1b2f46; font-weight: bold; white-space: nowrap; }
+    .info-label-a { width: 10%; }
+    .info-value-a { width: 33%; }
+    .info-label-b { width: 10%; }
+    .info-value-b { width: 47%; }
+    .report-table { table-layout: fixed; }
+    .report-table th, .report-table td { border: .7px solid #5f6f82; padding: 1mm .7mm; text-align: center; vertical-align: middle; }
+    .report-table th { background: #eaf1f8; color: #1b2f46; font-size: 6.7pt; font-weight: bold; height: 7mm; }
+    .report-table td { height: 9mm; }
+    .report-table td.value { font-size: 7.5pt; }
+    .report-table .wide { width: 9%; }
+    .report-table .narrow { width: 5.5%; }
+    .report-table .mark { color: #123e73; font-size: 8pt; font-weight: bold; }
+    .lower { margin-top: 3mm; table-layout: fixed; }
+    .lower > tbody > tr > td { padding-right: 3mm; vertical-align: top; }
+    .lower > tbody > tr > td:last-child { padding-right: 0; }
+    .section-title { background: #eaf1f8; border: .7px solid #5f6f82; color: #1b2f46; font-weight: bold; padding: 1.5mm; text-align: center; }
+    .equipment-details td { border: .7px solid #5f6f82; height: 6mm; padding: 1mm; text-align: center; }
+    .equipment-details .label { width: 38%; }
+    .observations { border: .7px solid #5f6f82; min-height: 22mm; padding: 1.5mm; }
+    .signature { margin-top: 4mm; width: 42%; }
+    .signature td { text-align: center; }
+    .signature-image { height: 14mm; max-width: 48mm; object-fit: contain; }
+    .signature-line { border-top: .8px solid #5f6f82; }
+    .signature-label { color: #123e73; font-weight: bold; padding-top: 1mm; }
+    .footer { border-top: 1px solid #123e73; color: #123e73; font-size: 6.2pt; font-weight: bold; margin-top: 4mm; padding-top: 1.5mm; text-align: center; }
+    .footer p { margin: .6mm 0; }
+  </style>
+</head>
+<body>
+  <table class="header">
+    <tr>
+      <td class="brand-cell"><span class="brand-mark">A&amp;C</span><span class="brand-name">SOLUCIONES<br>HIDROELÉCTRICAS SAS</span></td>
+      <td class="contact-cell">
+        <p class="company-line"><strong>Nit. 901269341-0</strong></p>
+        <p class="company-line">3168950832 / 3155763894</p>
+        <p class="company-line">aycsolucioneshidroelectricas@gmail.com</p>
+        <p class="company-line">2830205 - Calle 23 No. 28 - 11</p>
+      </td>
+    </tr>
+  </table>
+
+  <div class="title">REPORTE MANTENIMIENTO DE EQUIPOS DE BOMBEO</div>
+
+  <table class="info-table">
+    <tr><td class="label info-label-a">CLIENTE:</td><td class="info-value-a">{{ customer.name }}</td><td class="label info-label-b">TELÉFONO:</td><td class="info-value-b">{{ customer.phone }}</td></tr>
+    <tr><td class="label info-label-a">FECHA:</td><td class="info-value-a">{{ report.report_date|date:"d/m/Y" }}</td><td class="label info-label-b">ATENCIÓN:</td><td class="info-value-b">{{ report.attention }}</td></tr>
+  </table>
+
+  <table class="report-table">
+    <thead>
+      <tr>
+        <th colspan="4">EQUIPOS EN H.P.</th>
+        <th colspan="2">AMPERAJE</th>
+        <th colspan="2">TEMPERATURA</th>
+        <th colspan="2">RUIDOS</th>
+        <th colspan="2">HUMEDAD</th>
+        <th colspan="2">CONEXIONES ELÉCTRICAS</th>
+      </tr>
+      <tr>
+        <th class="wide">PRESIÓN</th><th class="wide">SUMERGIBLES</th><th class="wide">MEDIDA</th><th class="wide">PLACA</th>
+        <th class="wide">MEDIDA</th><th class="wide">PLACA</th>
+        <th class="narrow">NORMAL</th><th class="narrow">RECALENTADA</th>
+        <th class="narrow">NORMAL</th><th class="narrow">FALLAS</th>
+        <th class="narrow">SÍ</th><th class="narrow">NO</th>
+        <th class="narrow">NORMAL</th><th class="narrow">FALLAS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in report.equipment_rows %}
+      <tr>
+        <td class="value">{{ row.pressure }}</td><td class="value">{{ row.submersibles }}</td><td class="value">{{ row.hp_measure }}</td><td class="value">{{ row.hp_plate }}</td>
+        <td class="value">{{ row.amperage_measure }}</td><td class="value">{{ row.amperage_plate }}</td>
+        <td class="mark">{% if row.temperature == 'normal' %}X{% endif %}</td><td class="mark">{% if row.temperature == 'recalentada' %}X{% endif %}</td>
+        <td class="mark">{% if row.noises == 'normal' %}X{% endif %}</td><td class="mark">{% if row.noises == 'fallas' %}X{% endif %}</td>
+        <td class="mark">{% if row.humidity == 'si' %}X{% endif %}</td><td class="mark">{% if row.humidity == 'no' %}X{% endif %}</td>
+        <td class="mark">{% if row.electrical_connections == 'normal' %}X{% endif %}</td><td class="mark">{% if row.electrical_connections == 'fallas' %}X{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="lower">
+    <tr>
+      <td style="width: 37%;">
+        <div class="section-title">TANQUE HIDRONEUMÁTICO</div>
+        <table class="equipment-details">
+          <tr><td class="label">MARCA</td><td>{{ report.hydropneumatic_tank_brand }}</td></tr>
+          <tr><td class="label">CARGA DETERMINADA</td><td>{{ report.hydropneumatic_tank_determined_charge }}</td></tr>
+          <tr><td class="label">CARGA MEDIDA</td><td>{{ report.hydropneumatic_tank_measured_charge }}</td></tr>
+        </table>
+      </td>
+      <td style="width: 25%;">
+        <div class="section-title">CONTROLADOR DE VELOCIDAD</div>
+        <table class="equipment-details"><tr><td class="label">MARCA</td><td>{{ report.speed_controller_brand }}</td></tr></table>
+      </td>
+      <td style="width: 38%;"><div class="section-title">OBSERVACIONES:</div><div class="observations">{{ report.observations|linebreaksbr }}</div></td>
+    </tr>
+  </table>
+
+  <table class="signature"><tr><td>{% if report.technician_signature %}<img class="signature-image" src="{{ report.technician_signature }}" alt="Firma del técnico">{% endif %}<div class="signature-line"></div><div class="signature-label">TÉCNICO</div><div>{{ report.technician_name }}</div></td></tr></table>
+
+  <div class="footer">
+    <p>A&amp;C SOLUCIONES HIDROELÉCTRICAS SAS</p>
+    <p>MONTAJES Y MANTENIMIENTO DE EQUIPOS DE PRESIÓN - PLANTAS ELÉCTRICAS DE EMERGENCIA</p>
+    <p>SISTEMA DE REDES CONTRA INCENDIO - ADECUACIONES ELÉCTRICAS</p>
+  </div>
+</body>
+</html>
