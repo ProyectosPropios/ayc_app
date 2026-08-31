@@ -176,12 +176,21 @@ PUSHER_CONFIG = {
 }
 PUSHER_ENABLED = env.bool('PUSHER_ENABLED', default=False)
 
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=CELERY_BROKER_URL)
+CELERY_ENABLED = env.bool('CELERY_ENABLED', default=bool(os.getenv('CELERY_BROKER_URL')))
+if CELERY_ENABLED:
+    CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=CELERY_BROKER_URL)
+else:
+    # Permite probar la API gratis sin un Redis ni un worker ejecutandose.
+    CELERY_BROKER_URL = 'memory://'
+    CELERY_RESULT_BACKEND = 'cache+memory://'
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Bogota'
+CELERY_TASK_ALWAYS_EAGER = not CELERY_ENABLED
+CELERY_TASK_EAGER_PROPAGATES = True
 
 CELERY_BEAT_SCHEDULE = {
     'recordatorio_trabajos_del_dia': {

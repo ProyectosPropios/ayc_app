@@ -130,18 +130,17 @@ El informe general queda pendiente de definir sus campos y reglas particulares.
 
 ## Despliegue en Render con Docker
 
-El archivo `render.yaml` define el despliegue completo: servicio web de Django,
-worker de Celery, proceso beat, PostgreSQL y Redis administrado para las colas.
-Render construye los servicios web y de Celery desde el mismo `Dockerfile`.
+El archivo `render.yaml` define el despliegue gratuito del servicio web de
+Django y PostgreSQL. Celery, Redis y beat quedan desactivados en este entorno
+para que no sean necesarios servicios pagos.
 
 1. Sube el proyecto a un repositorio de GitHub o GitLab. No subas `.env`,
    `.env.docker` ni credenciales.
 2. En Render abre **New > Blueprint**, conecta el repositorio y selecciona el
    archivo `render.yaml` de la raiz.
-3. Completa los valores secretos que Render solicite: correo SMTP, URL del
-   frontend, `CORS_ALLOWED_ORIGINS` y `CSRF_TRUSTED_ORIGINS`. Usa la misma
-   `SECRET_KEY` para web, worker y beat cuando Render la solicite para esos
-   servicios.
+3. Render genera automaticamente una `SECRET_KEY`. Cuando conectes un
+   frontend separado, configura `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS` y
+   `CSRF_TRUSTED_ORIGINS` en el Dashboard.
 4. Espera a que el servicio web pase `GET /health/`. La respuesta esperada es
    `{"status":"ok"}`.
 5. En el Shell del servicio web crea el primer administrador:
@@ -150,17 +149,29 @@ Render construye los servicios web y de Celery desde el mismo `Dockerfile`.
 python manage.py createsuperuser
 ```
 
-El Blueprint usa PostgreSQL y conecta automaticamente la API y Celery a sus
-servicios internos. Redis esta configurado con `noeviction` y persistencia,
-porque se usa como broker de tareas. Los procesos web, worker, beat y Redis
-persistente requieren el plan de Render correspondiente; la base de datos queda
-en el plan gratuito para esta etapa de pruebas.
+El Blueprint usa PostgreSQL. `CELERY_ENABLED=0` hace que la API funcione sin
+Redis ni worker; las tareas que se ejecuten durante esta etapa se procesan de
+forma inmediata en el proceso web. Los recordatorios programados por beat no
+se ejecutan mientras Celery este desactivado.
 
 Los siguientes despliegues se hacen con un `push`. El Blueprint usa
 `autoDeployTrigger: checksPass`, por lo que Render espera las pruebas de
-GitHub antes de construir una nueva version. Las migraciones se ejecutan en
-`preDeployCommand`; si se agrega una migracion que falla, el despliegue no debe
-pasar a trafico.
+GitHub antes de construir una nueva version. Las migraciones y `collectstatic`
+se ejecutan al iniciar el contenedor gratuito.
+
+Render permite Key Value gratuito, pero es solo memoria y pierde los datos al
+reiniciar; por eso no lo incluimos en esta etapa. Cuando necesites Celery en
+produccion, crea un Key Value persistente y un worker separado.
+
+En el Blueprint gratuito el backend de correo es `console`: los reportes no se
+envian realmente al cliente, sino que se escriben en los logs. Render bloquea
+las conexiones SMTP salientes en servicios gratuitos. Para activar el correo
+real, integra despues un proveedor con API HTTPS o cambia a un servicio que
+permita SMTP.
+
+La base PostgreSQL gratuita de Render es temporal para pruebas: tiene limite de
+1 GB, no incluye backups y expira 30 dias despues de crearla. Exporta los datos
+o actualiza el plan antes de esa fecha si necesitas conservarlos.
 
 Para probar la suite local sin depender del usuario PostgreSQL del `.env`:
 
