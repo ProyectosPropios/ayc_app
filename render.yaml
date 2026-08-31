@@ -1,20 +1,19 @@
-# Blueprint de Render para desplegar la API y sus procesos de Celery.
-# Los valores marcados con sync: false se solicitan una sola vez en Render.
+# Blueprint gratuito para la primera version de AYC API.
+# Celery, Redis y beat se activan en un Blueprint separado cuando haya presupuesto.
 
 services:
   - type: web
     name: ayc-api-web
     runtime: docker
     region: ohio
-    plan: 0.5c-512mb
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    preDeployCommand: python manage.py migrate --noinput && python manage.py collectstatic --noinput
     healthCheckPath: /health/
     autoDeployTrigger: checksPass
     maxShutdownDelaySeconds: 60
     envVars:
-      - fromGroup: ayc-common
+      - fromGroup: ayc-free
       - key: DATABASE_URL
         fromDatabase:
           name: ayc-api-db
@@ -22,93 +21,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: RUN_MIGRATIONS
-        value: "0"
-      - key: EMAIL_HOST
-        sync: false
-      - key: EMAIL_PORT
-        value: "587"
-      - key: EMAIL_USE_TLS
         value: "1"
-      - key: EMAIL_HOST_USER
-        sync: false
-      - key: EMAIL_HOST_PASSWORD
-        sync: false
-      - key: DEFAULT_FROM_EMAIL
-        sync: false
-      - key: FRONTEND_URL
-        sync: false
-      - key: CORS_ALLOWED_ORIGINS
-        sync: false
-      - key: CSRF_TRUSTED_ORIGINS
-        sync: false
-
-  - type: worker
-    name: ayc-api-worker
-    runtime: docker
-    region: ohio
-    plan: 0.5c-512mb
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
-    dockerCommand: celery -A ayc_api worker --loglevel=info --concurrency=2
-    maxShutdownDelaySeconds: 120
-    envVars:
-      - fromGroup: ayc-common
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ayc-api-db
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: keyvalue
-          name: ayc-api-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: keyvalue
-          name: ayc-api-redis
-          property: connectionString
-      - key: SECRET_KEY
-        sync: false
-      - key: RUN_MIGRATIONS
-        value: "0"
-
-  - type: pserv
-    name: ayc-api-beat
-    runtime: docker
-    region: ohio
-    plan: 0.5c-512mb
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
-    dockerCommand: celery -A ayc_api beat --loglevel=info
-    maxShutdownDelaySeconds: 60
-    envVars:
-      - fromGroup: ayc-common
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ayc-api-db
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: keyvalue
-          name: ayc-api-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: keyvalue
-          name: ayc-api-redis
-          property: connectionString
-      - key: SECRET_KEY
-        sync: false
-      - key: RUN_MIGRATIONS
-        value: "0"
-
-  - type: keyvalue
-    name: ayc-api-redis
-    region: ohio
-    plan: 256mb
-    ipAllowList: []
-    maxmemoryPolicy: noeviction
-    persistenceMode: journal-snapshot
 
 databases:
   - name: ayc-api-db
@@ -118,11 +31,13 @@ databases:
     diskSizeGB: 1
 
 envVarGroups:
-  - name: ayc-common
+  - name: ayc-free
     envVars:
       - key: DEBUG
         value: "0"
+      - key: CELERY_ENABLED
+        value: "0"
       - key: EMAIL_BACKEND
-        value: django.core.mail.backends.smtp.EmailBackend
+        value: django.core.mail.backends.console.EmailBackend
       - key: PUSHER_ENABLED
         value: "0"
