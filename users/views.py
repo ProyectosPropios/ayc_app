@@ -1,3 +1,5 @@
+import secrets
+
 from django.conf import settings
 from django.db import transaction
 from rest_framework import generics, status
@@ -11,6 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import User
 from .permissions import IsAdminRole
 from .serializers import (
+    BootstrapAdminSerializer,
     ChangePasswordSerializer,
     LoginSerializer,
     TechnicianSerializer,
@@ -90,6 +93,46 @@ class ChangePasswordView(APIView):
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save(update_fields=["password"])
         return Response({"detail": "Contraseña actualizada correctamente."})
+
+
+class BootstrapAdminView(APIView):
+    """Crea una sola vez el superusuario inicial en Render Free."""
+
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        expected_token = getattr(settings, "BOOTSTRAP_ADMIN_TOKEN", "")
+        provided_token = request.headers.get("X-Bootstrap-Token", "")
+        if not expected_token or not secrets.compare_digest(provided_token, expected_token):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if User.objects.filter(is_superuser=True).exists():
+            return Response(
+                {"detail": "El superusuario inicial ya fue creado."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        serializer = BootstrapAdminSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user = User(
+            email=User.objects.normalize_email(data["email"]).lower(),
+            first_name=data.get("first_name", ""),
+            last_name=data.get("last_name", ""),
+            role=User.Role.ADMIN,
+            is_staff=True,
+            is_superuser=True,
+            is_active=True,
+        )
+        user.set_password(data["password"])
+        user.full_clean()
+        user.save()
+
+        return Response(
+            {"detail": "Superusuario creado correctamente. Elimina BOOTSTRAP_ADMIN_TOKEN ahora."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TechnicianListCreateView(generics.ListCreateAPIView):

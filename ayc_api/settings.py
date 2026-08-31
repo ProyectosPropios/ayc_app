@@ -145,6 +145,7 @@ default_frontend_url = (
     else 'http://localhost:5173'
 )
 FRONTEND_URL = env('FRONTEND_URL', default=default_frontend_url)
+BOOTSTRAP_ADMIN_TOKEN = env('BOOTSTRAP_ADMIN_TOKEN', default='')
 
 default_frontend_origins = [default_frontend_url]
 CORS_ALLOWED_ORIGINS = env.list(

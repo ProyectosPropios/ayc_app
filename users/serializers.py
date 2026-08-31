@@ -57,6 +57,19 @@ class ChangePasswordSerializer(serializers.Serializer):
         return attrs
 
 
+class BootstrapAdminSerializer(serializers.Serializer):
+    """Datos del primer administrador creado en un entorno sin Shell."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    first_name = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    last_name = serializers.CharField(required=False, allow_blank=True, max_length=100)
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
+
+
 class TechnicianSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
 

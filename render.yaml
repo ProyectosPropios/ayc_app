@@ -21,6 +21,8 @@ services:
         generateValue: true
       - key: RUN_MIGRATIONS
         value: "1"
+      - key: BOOTSTRAP_ADMIN_TOKEN
+        sync: false
 
 databases:
   - name: ayc-api-db
