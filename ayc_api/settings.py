@@ -6,6 +6,7 @@ import dj_database_url
 from celery.schedules import crontab
 from datetime import timedelta
 from django.core.exceptions import ImproperlyConfigured
+from urllib.parse import quote
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -164,10 +165,22 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
 cloudinary.config(
-    cloud_name=env('CLOUD_NAME', default=''),
-    api_key=env('API_KEY', default=''),
-    api_secret=env('API_SECRET', default=''),
+    cloud_name=env('CLOUDINARY_CLOUD_NAME', default=env('CLOUD_NAME', default='')),
+    api_key=env('CLOUDINARY_API_KEY', default=env('API_KEY', default='')),
+    api_secret=env('CLOUDINARY_API_SECRET', default=env('API_SECRET', default='')),
 )
+
+CLOUDINARY_CLOUD_NAME = env(
+    'CLOUDINARY_CLOUD_NAME',
+    default=env('CLOUD_NAME', default=''),
+)
+CLOUDINARY_LOGO_PUBLIC_ID = env('CLOUDINARY_LOGO_PUBLIC_ID', default='')
+CLOUDINARY_LOGO_URL = ''
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_LOGO_PUBLIC_ID:
+    CLOUDINARY_LOGO_URL = (
+        f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
+        f'f_png,q_auto/{quote(CLOUDINARY_LOGO_PUBLIC_ID, safe="/")}.png'
+    )
 
 PUSHER_CONFIG = {
     'app_id': env('APP_ID', default=''),
