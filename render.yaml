@@ -31,6 +31,10 @@ services:
         value: https://aycsoluciones.vercel.app
       - key: AUTH_COOKIE_SAMESITE
         value: None
+      - key: CLOUDINARY_CLOUD_NAME
+        value: duyneiyve
+      - key: CLOUDINARY_LOGO_PUBLIC_ID
+        value: soluciones_1_xkf6ad
 
 databases:
   - name: ayc-api-db

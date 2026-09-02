@@ -1,3 +1,5 @@
+import logging
+
 from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -13,6 +15,20 @@ from .models import ElectricalReport
 from .pdf import generate_electrical_report_pdf
 from .serializers import ElectricalReportSerializer
 from .services import send_electrical_report_email
+
+logger = logging.getLogger(__name__)
+
+
+def _try_send_electrical_report_email(report):
+    try:
+        send_electrical_report_email(report)
+    except Exception:
+        # El informe ya fue guardado. Si el SMTP falla, se puede reintentar
+        # desde el endpoint manual /send-email/ sin perder la información.
+        logger.exception(
+            "No se pudo enviar automaticamente el informe electrico %s",
+            report.pk,
+        )
 
 
 class ElectricalReportViewSet(viewsets.ModelViewSet):
@@ -42,7 +58,9 @@ class ElectricalReportViewSet(viewsets.ModelViewSet):
             and work_order.technician_id != self.request.user.id
         ):
             raise PermissionDenied("Solo puedes crear informes para tus órdenes asignadas.")
-        serializer.save()
+        report = serializer.save()
+        if report.status == ElectricalReport.ReportStatus.COMPLETED:
+            _try_send_electrical_report_email(report)
 
     def perform_update(self, serializer):
         if (
@@ -51,7 +69,13 @@ class ElectricalReportViewSet(viewsets.ModelViewSet):
             and serializer.instance.work_order.technician_id != self.request.user.id
         ):
             raise PermissionDenied("Solo puedes editar informes de tus órdenes asignadas.")
-        serializer.save()
+        previous_status = serializer.instance.status
+        report = serializer.save()
+        if (
+            previous_status != ElectricalReport.ReportStatus.COMPLETED
+            and report.status == ElectricalReport.ReportStatus.COMPLETED
+        ):
+            _try_send_electrical_report_email(report)
 
     @action(detail=True, methods=["get"], url_path="pdf")
     def pdf(self, request, pk=None):

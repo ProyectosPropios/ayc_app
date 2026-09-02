@@ -1,3 +1,5 @@
+import logging
+
 from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -14,6 +16,20 @@ from .models import PumpingReport
 from .pdf import generate_pumping_report_pdf
 from .serializers import PumpingReportSerializer
 from .services import send_pumping_report_email
+
+logger = logging.getLogger(__name__)
+
+
+def _try_send_pumping_report_email(report):
+    try:
+        send_pumping_report_email(report)
+    except Exception:
+        # El informe ya fue guardado. Si el SMTP falla, se puede reintentar
+        # desde el endpoint manual /send-email/ sin perder la información.
+        logger.exception(
+            "No se pudo enviar automaticamente el informe de bombeo %s",
+            report.pk,
+        )
 
 
 class PumpingReportViewSet(viewsets.ModelViewSet):
@@ -44,6 +60,8 @@ class PumpingReportViewSet(viewsets.ModelViewSet):
         ):
             raise PermissionDenied("Solo puedes crear informes para tus órdenes asignadas.")
         report = serializer.save()
+        if report.status == PumpingReport.ReportStatus.COMPLETED:
+            _try_send_pumping_report_email(report)
         if report.work_order.technician:
             notify_user(
                 recipient=report.work_order.technician,
@@ -60,7 +78,13 @@ class PumpingReportViewSet(viewsets.ModelViewSet):
             and serializer.instance.work_order.technician_id != self.request.user.id
         ):
             raise PermissionDenied("Solo puedes editar informes de tus órdenes asignadas.")
-        serializer.save()
+        previous_status = serializer.instance.status
+        report = serializer.save()
+        if (
+            previous_status != PumpingReport.ReportStatus.COMPLETED
+            and report.status == PumpingReport.ReportStatus.COMPLETED
+        ):
+            _try_send_pumping_report_email(report)
 
     @action(detail=True, methods=["get"], url_path="pdf")
     def pdf(self, request, pk=None):

@@ -11,6 +11,7 @@
     .header td { vertical-align: middle; }
     .brand-cell { width: 42%; }
     .contact-cell { width: 58%; text-align: right; }
+    .brand-logo { display: block; height: 20mm; max-width: 42mm; object-fit: contain; }
     .brand-mark { color: #123e73; display: inline-block; font-size: 25pt; font-weight: bold; line-height: .8; margin-right: 3mm; vertical-align: middle; }
     .brand-name { color: #123e73; display: inline-block; font-size: 8pt; font-weight: bold; line-height: 1.15; text-align: left; vertical-align: middle; }
     .company-line { margin: 0 0 1.1mm; }
@@ -51,8 +52,12 @@
   <table class="header">
     <tr>
       <td class="brand-cell">
-        <span class="brand-mark">A&amp;C</span>
-        <span class="brand-name">SOLUCIONES<br>HIDROELÉCTRICAS SAS</span>
+        {% if company_logo_url %}
+          <img class="brand-logo" src="{{ company_logo_url }}" alt="A&amp;C Soluciones Hidroeléctricas">
+        {% else %}
+          <span class="brand-mark">A&amp;C</span>
+          <span class="brand-name">SOLUCIONES<br>HIDROELÉCTRICAS SAS</span>
+        {% endif %}
       </td>
       <td class="contact-cell">
         <p class="company-line"><strong>Nit. 901269341-0</strong></p>
