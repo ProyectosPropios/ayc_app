@@ -20,6 +20,7 @@ def generate_pumping_report_pdf(report: PumpingReport) -> bytes:
         {
             "report": report,
             "customer": report.work_order.customer,
+            "company_logo_url": settings.CLOUDINARY_LOGO_URL,
         },
     )
     return HTML(string=html, base_url=str(settings.BASE_DIR)).write_pdf()

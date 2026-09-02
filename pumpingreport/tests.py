@@ -121,7 +121,7 @@ class PumpingReportTests(TestCase):
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
         DEFAULT_FROM_EMAIL="no-reply@example.com",
     )
-    def test_completed_report_is_emailed_with_pdf(self):
+    def test_completed_report_is_emailed_automatically_with_pdf(self):
         self.client.force_authenticate(self.admin)
         payload = self.report_payload()
         payload.update(
@@ -134,10 +134,6 @@ class PumpingReportTests(TestCase):
             "/api/pumping-reports/", payload, format="json"
         )
         self.assertEqual(create_response.status_code, 201)
-        send_response = self.client.post(
-            f"/api/pumping-reports/{create_response.data['id']}/send-email/"
-        )
-        self.assertEqual(send_response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(mail.outbox[0].attachments[0][0].endswith("-bombeo.pdf"))
         self.assertEqual(mail.outbox[0].attachments[0][2], "application/pdf")
