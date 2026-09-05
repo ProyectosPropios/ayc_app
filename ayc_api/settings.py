@@ -154,6 +154,7 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'no-reply@localhost')
+EMAIL_DELIVERY_ENABLED = env.bool('EMAIL_DELIVERY_ENABLED', default=DEBUG)
 default_frontend_url = (
     f'https://{RENDER_EXTERNAL_HOSTNAME}'
     if RENDER_EXTERNAL_HOSTNAME
