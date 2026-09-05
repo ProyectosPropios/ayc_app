@@ -90,13 +90,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ayc_api.wsgi.application'
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=env(
-            'DATABASE_URL',
-            default=env('URL_DB', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+database_url = env('DATABASE_URL', default='').strip()
+if not database_url:
+    database_url = env('URL_DB', default='').strip()
+
+# SQLite is convenient for local development, but must never be used silently
+# in a deployed Render service. An empty DATABASE_URL makes dj-database-url
+# return Django's dummy backend, which only fails later during migrations.
+if not database_url:
+    if RENDER_EXTERNAL_HOSTNAME or not DEBUG:
+        raise ImproperlyConfigured(
+            'DATABASE_URL debe estar configurada en produccion. '
+            'Vincula el servicio con Render Postgres mediante fromDatabase.'
         )
-    )
+    database_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+
+DATABASES = {
+    'default': dj_database_url.config(default=database_url)
 }
 
 AUTH_USER_MODEL = 'users.User'
