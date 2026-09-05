@@ -7,8 +7,8 @@ set -eu
 export DJANGO_SETTINGS_MODULE=ayc_api.settings
 
 if [ "${RUN_MIGRATIONS:-0}" = "1" ]; then
-    python manage.py migrate --noinput
-    python manage.py collectstatic --noinput
+    python manage.py migrate --noinput --settings=ayc_api.settings
+    python manage.py collectstatic --noinput --settings=ayc_api.settings
 fi
 
 exec "$@"
