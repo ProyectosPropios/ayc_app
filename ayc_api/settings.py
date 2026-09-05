@@ -105,10 +105,19 @@ if not database_url:
         )
     database_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
 
-database_config = dj_database_url.config(
-    default=database_url,
-    conn_max_age=600,
-)
+try:
+    # Parseamos la URL que ya seleccionamos arriba. Usar config() aqui
+    # volveria a leer DATABASE_URL directamente desde os.environ y podria
+    # ignorar el fallback si Render la deja definida pero vacia.
+    database_config = dj_database_url.parse(
+        database_url,
+        conn_max_age=600,
+    )
+except (TypeError, ValueError) as exc:
+    raise ImproperlyConfigured(
+        'DATABASE_URL no contiene una URL de base de datos valida. '
+        'En Render usa la Internal Database URL de ayc-api-db.'
+    ) from exc
 if not database_config.get('ENGINE'):
     raise ImproperlyConfigured(
         'DATABASE_URL no contiene una URL de base de datos valida. '
