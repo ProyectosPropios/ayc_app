@@ -105,9 +105,21 @@ if not database_url:
         )
     database_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
 
-DATABASES = {
-    'default': dj_database_url.config(default=database_url)
-}
+database_config = dj_database_url.config(
+    default=database_url,
+    conn_max_age=600,
+)
+if not database_config.get('ENGINE'):
+    raise ImproperlyConfigured(
+        'DATABASE_URL no contiene una URL de base de datos valida. '
+        'En Render usa la Internal Database URL de ayc-api-db.'
+    )
+if RENDER_EXTERNAL_HOSTNAME and database_config['ENGINE'] != 'django.db.backends.postgresql':
+    raise ImproperlyConfigured(
+        'En Render DATABASE_URL debe apuntar a PostgreSQL, no a SQLite.'
+    )
+
+DATABASES = {'default': database_config}
 
 AUTH_USER_MODEL = 'users.User'
 
