@@ -37,6 +37,35 @@ El usuario administrador debe crearse con un correo y una contraseña que cumpla
 | Informes de plantas eléctricas | `/api/electrical-reports/` |
 | Informes de bombeo | `/api/pumping-reports/` |
 
+## Seguridad del frontend con cookies
+
+El login y la renovación guardan los JWT únicamente en cookies `HttpOnly`; ya
+no los devuelven en el JSON de la respuesta. Antes de iniciar sesión, el
+frontend debe solicitar `GET /api/auth/csrf/`. La respuesta entrega un token
+CSRF (no es un token de autenticación) para conservarlo solo en memoria. Para
+cada petición `POST`, `PUT`, `PATCH` o `DELETE`, debe enviarlo en el header
+`X-CSRFToken`. Con Axios:
+
+```javascript
+let csrfToken = '';
+
+const csrfResponse = await api.get('/auth/csrf/');
+csrfToken = csrfResponse.data.csrf_token;
+
+api.interceptors.request.use((config) => {
+  const unsafe = ['post', 'put', 'patch', 'delete'].includes(
+    (config.method || 'get').toLowerCase(),
+  );
+  if (unsafe) config.headers['X-CSRFToken'] = csrfToken;
+  return config;
+});
+```
+
+Las respuestas privadas de `/api/` y `/admin/` usan `Cache-Control: no-store`.
+En producción se fuerza HTTPS, HSTS, cookies seguras, CORS explícito y
+limitación de intentos de login. Las credenciales deben configurarse en
+variables de entorno, nunca en el repositorio.
+
 ## Informe de planta eléctrica
 
 El informe conserva los 24 controles del formato físico. Cada control recibe un

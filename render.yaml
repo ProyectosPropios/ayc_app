@@ -30,7 +30,17 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: https://aycsoluciones.vercel.app
       - key: AUTH_COOKIE_SAMESITE
-        value: None
+        value: "None"
+      - key: AUTH_COOKIE_SECURE
+        value: "1"
+      - key: CSRF_COOKIE_SAMESITE
+        value: "None"
+      - key: SECURE_SSL_REDIRECT
+        value: "1"
+      - key: SECURE_HSTS_SECONDS
+        value: "31536000"
+      - key: SECURE_HSTS_INCLUDE_SUBDOMAINS
+        value: "1"
       - key: CLOUDINARY_CLOUD_NAME
         value: duyneiyve
       - key: CLOUDINARY_LOGO_PUBLIC_ID

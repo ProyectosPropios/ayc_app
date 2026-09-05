@@ -29,7 +29,47 @@ class AuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("access_token", response.cookies)
+        self.assertNotIn("access", response.data)
+        self.assertNotIn("refresh", response.data)
         self.assertEqual(response.data["user"]["role"], User.Role.TECHNICIAN)
+
+    def test_csrf_cookie_is_available(self):
+        response = self.client.get("/api/auth/csrf/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("csrftoken", response.cookies)
+        self.assertTrue(response.data["csrf_token"])
+
+    def test_cookie_authenticated_writes_require_csrf(self):
+        client = APIClient(enforce_csrf_checks=True)
+        client.get("/api/auth/csrf/")
+        response = client.post(
+            "/api/auth/login/",
+            {"email": "tecnico@example.com", "password": "Tecnico123!"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        response = client.post(
+            "/api/auth/change-password/",
+            {
+                "current_password": "Tecnico123!",
+                "new_password": "NuevaTecnico456!",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+        csrf_token = client.cookies["csrftoken"].value
+        response = client.post(
+            "/api/auth/change-password/",
+            {
+                "current_password": "Tecnico123!",
+                "new_password": "NuevaTecnico456!",
+            },
+            format="json",
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertEqual(response.status_code, 200)
 
     def test_technician_cannot_manage_technicians(self):
         self.client.force_authenticate(self.technician)

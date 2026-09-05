@@ -1,4 +1,5 @@
 from pathlib import Path
+import secrets
 import environ
 import os
 import cloudinary
@@ -19,7 +20,13 @@ DEBUG = env.bool('DEBUG', default=not bool(RENDER_EXTERNAL_HOSTNAME))
 SECRET_KEY = env('SECRET_KEY', default='')
 if not SECRET_KEY and not DEBUG:
     raise ImproperlyConfigured('SECRET_KEY must be configured when DEBUG=0')
-SECRET_KEY = SECRET_KEY or 'django-insecure-local-development-key'
+SECRET_KEY = SECRET_KEY or secrets.token_urlsafe(50)
+if RENDER_EXTERNAL_HOSTNAME and (
+    len(SECRET_KEY) < 50 or SECRET_KEY.startswith('django-insecure-')
+):
+    raise ImproperlyConfigured(
+        'SECRET_KEY debe ser larga y aleatoria en el entorno de producción.'
+    )
 
 default_allowed_hosts = ['localhost', '127.0.0.1']
 if RENDER_EXTERNAL_HOSTNAME:
@@ -54,7 +61,9 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'core.middleware.PrivateResponseHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -99,6 +108,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/minute',
+        'refresh': '30/minute',
+        'bootstrap': '3/hour',
+    },
 }
 
 SIMPLE_JWT = {
@@ -109,7 +123,7 @@ SIMPLE_JWT = {
 }
 
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = env('CSRF_COOKIE_SAMESITE', default='Lax' if DEBUG else 'None')
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -148,7 +162,11 @@ default_frontend_url = (
 FRONTEND_URL = env('FRONTEND_URL', default=default_frontend_url)
 BOOTSTRAP_ADMIN_TOKEN = env('BOOTSTRAP_ADMIN_TOKEN', default='')
 AUTH_COOKIE_SAMESITE = env('AUTH_COOKIE_SAMESITE', default='Lax' if DEBUG else 'None')
-
+AUTH_COOKIE_SECURE = env.bool('AUTH_COOKIE_SECURE', default=not DEBUG)
+if AUTH_COOKIE_SAMESITE.lower() == 'none' and not AUTH_COOKIE_SECURE:
+    raise ImproperlyConfigured(
+        'AUTH_COOKIE_SAMESITE=None requiere AUTH_COOKIE_SECURE=1.'
+    )
 default_frontend_origins = [default_frontend_url]
 CORS_ALLOWED_ORIGINS = env.list(
     'CORS_ALLOWED_ORIGINS',
@@ -159,10 +177,44 @@ CSRF_TRUSTED_ORIGINS = env.list(
     default=default_frontend_origins,
 )
 CORS_ALLOW_CREDENTIALS = True
+if '*' in CORS_ALLOWED_ORIGINS:
+    raise ImproperlyConfigured(
+        'CORS_ALLOWED_ORIGINS no puede usar * cuando se envían credenciales.'
+    )
+if RENDER_EXTERNAL_HOSTNAME:
+    configured_origins = set(CORS_ALLOWED_ORIGINS + CSRF_TRUSTED_ORIGINS)
+    insecure_origins = {
+        origin for origin in configured_origins
+        if not origin.startswith('https://')
+    }
+    if insecure_origins:
+        raise ImproperlyConfigured(
+            'En producción, CORS_ALLOWED_ORIGINS y CSRF_TRUSTED_ORIGINS deben usar HTTPS.'
+        )
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
+SECURE_HSTS_SECONDS = env.int(
+    'SECURE_HSTS_SECONDS',
+    default=31536000 if not DEBUG else 0,
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
+    'SECURE_HSTS_INCLUDE_SUBDOMAINS',
+    default=False,
+)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', default='same-origin')
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+if CSRF_COOKIE_SAMESITE.lower() == 'none' and not CSRF_COOKIE_SECURE:
+    raise ImproperlyConfigured(
+        'CSRF_COOKIE_SAMESITE=None requiere una cookie CSRF segura.'
+    )
 
 cloudinary.config(
     cloud_name=env('CLOUDINARY_CLOUD_NAME', default=env('CLOUD_NAME', default='')),
@@ -214,5 +266,5 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
-FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
+DATA_UPLOAD_MAX_MEMORY_SIZE = env.int('DATA_UPLOAD_MAX_MEMORY_SIZE', default=10485760)
+FILE_UPLOAD_MAX_MEMORY_SIZE = env.int('FILE_UPLOAD_MAX_MEMORY_SIZE', default=10485760)

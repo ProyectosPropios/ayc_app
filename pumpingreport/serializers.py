@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
@@ -5,6 +7,10 @@ from rest_framework import serializers
 from .models import PumpingReport
 
 User = get_user_model()
+SIGNATURE_DATA_URL_PATTERN = re.compile(
+    r"data:image/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=\s]+\Z"
+)
+MAX_SIGNATURE_LENGTH = 2_000_000
 
 
 class EquipmentRowSerializer(serializers.Serializer):
@@ -99,9 +105,19 @@ class PumpingReportSerializer(serializers.ModelSerializer):
         return fields
 
     def validate_technician_signature(self, value):
-        if value and not value.startswith("data:image/"):
+        if value and (
+            len(value) > MAX_SIGNATURE_LENGTH
+            or not SIGNATURE_DATA_URL_PATTERN.fullmatch(value)
+        ):
             raise serializers.ValidationError(
                 "La firma del técnico debe ser una imagen en formato data URL."
+            )
+        return value
+
+    def validate_equipment_rows(self, value):
+        if len(value) > 20:
+            raise serializers.ValidationError(
+                "El informe no puede contener más de 20 equipos."
             )
         return value
 
