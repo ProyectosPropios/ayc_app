@@ -61,5 +61,7 @@ envVarGroups:
         value: "0"
       - key: EMAIL_BACKEND
         value: django.core.mail.backends.console.EmailBackend
+      - key: EMAIL_DELIVERY_ENABLED
+        value: "0"
       - key: PUSHER_ENABLED
         value: "0"

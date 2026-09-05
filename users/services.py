@@ -4,6 +4,8 @@ from django.core.mail import send_mail
 
 def send_technician_credentials(user, temporary_password):
     """Envía al técnico las credenciales iniciales de acceso."""
+    if not settings.EMAIL_DELIVERY_ENABLED:
+        raise RuntimeError("El envío de correo no está configurado en este entorno.")
 
     send_mail(
         subject="Tus credenciales de acceso",

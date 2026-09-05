@@ -8,6 +8,8 @@ from .pdf import generate_pumping_report_pdf
 
 def send_pumping_report_email(report):
     """Envía el reporte y su PDF directamente desde memoria."""
+    if not settings.EMAIL_DELIVERY_ENABLED:
+        raise ValueError("El envío de correo no está configurado en este entorno.")
     customer = report.work_order.customer
     if not customer.email:
         raise ValueError("El cliente no tiene un correo electrónico registrado.")

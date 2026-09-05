@@ -197,11 +197,12 @@ Render permite Key Value gratuito, pero es solo memoria y pierde los datos al
 reiniciar; por eso no lo incluimos en esta etapa. Cuando necesites Celery en
 produccion, crea un Key Value persistente y un worker separado.
 
-En el Blueprint gratuito el backend de correo es `console`: los reportes no se
-envian realmente al cliente, sino que se escriben en los logs. Render bloquea
-las conexiones SMTP salientes en servicios gratuitos. Para activar el correo
-real, integra despues un proveedor con API HTTPS o cambia a un servicio que
-permita SMTP.
+En el Blueprint gratuito el correo está deshabilitado (`EMAIL_DELIVERY_ENABLED=0`):
+los reportes no se envían ni se escriben en los logs. Render puede bloquear las
+conexiones SMTP salientes en servicios gratuitos. Para activar el correo real,
+integra un proveedor con API HTTPS o cambia a un servicio que permita SMTP; no
+uses el backend `console` en producción porque expone el contenido de los
+mensajes en los logs.
 
 La base PostgreSQL gratuita de Render es temporal para pruebas: tiene limite de
 1 GB, no incluye backups y expira 30 dias despues de crearla. Exporta los datos

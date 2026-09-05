@@ -8,6 +8,8 @@ from .pdf import generate_electrical_report_pdf
 
 def send_electrical_report_email(report):
     """Envía el informe como adjunto sin guardarlo en el sistema de archivos."""
+    if not settings.EMAIL_DELIVERY_ENABLED:
+        raise ValueError("El envío de correo no está configurado en este entorno.")
     customer = report.work_order.customer
     if not customer.email:
         raise ValueError("El cliente no tiene un correo electrónico registrado.")
