@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
@@ -5,6 +7,10 @@ from rest_framework import serializers
 from .models import ElectricalReport
 
 User = get_user_model()
+SIGNATURE_DATA_URL_PATTERN = re.compile(
+    r"data:image/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=\s]+\Z"
+)
+MAX_SIGNATURE_LENGTH = 2_000_000
 
 
 class ElectricalReportSerializer(serializers.ModelSerializer):
@@ -96,9 +102,12 @@ class ElectricalReportSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _validate_signature(value, label):
-        if value and not value.startswith("data:image/"):
+        if value and (
+            len(value) > MAX_SIGNATURE_LENGTH
+            or not SIGNATURE_DATA_URL_PATTERN.fullmatch(value)
+        ):
             raise serializers.ValidationError(
-                f"{label.capitalize()} debe ser una imagen en formato data URL."
+                f"{label.capitalize()} debe ser PNG, JPG o WebP en formato data URL y no superar 2 MB."
             )
         return value
 

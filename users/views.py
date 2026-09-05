@@ -2,14 +2,21 @@ import secrets
 
 from django.conf import settings
 from django.db import transaction
+from django.middleware.csrf import get_token
 from rest_framework import generics, status
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from .authentication import enforce_csrf
 from .models import User
 from .permissions import IsAdminRole
 from .serializers import (
@@ -23,40 +30,60 @@ from .services import send_technician_credentials
 
 
 def _set_auth_cookies(response, data):
-    secure = not settings.DEBUG
+    secure = settings.AUTH_COOKIE_SECURE
     samesite = settings.AUTH_COOKIE_SAMESITE
-    response.set_cookie("access_token", data["access"], httponly=True, secure=secure, samesite=samesite)
-    response.set_cookie("refresh_token", data["refresh"], httponly=True, secure=secure, samesite=samesite)
+    if data.get("access"):
+        response.set_cookie(
+            "access_token",
+            data["access"],
+            httponly=True,
+            secure=secure,
+            samesite=samesite,
+            path="/",
+        )
+    if data.get("refresh"):
+        response.set_cookie(
+            "refresh_token",
+            data["refresh"],
+            httponly=True,
+            secure=secure,
+            samesite=samesite,
+            path="/",
+        )
 
 
 class LoginView(TokenObtainPairView):
     permission_classes = (AllowAny,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "login"
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
             _set_auth_cookies(response, response.data)
+            response.data.pop("access", None)
+            response.data.pop("refresh", None)
         return response
 
 
 class RefreshView(TokenRefreshView):
     permission_classes = (AllowAny,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "refresh"
 
     def post(self, request, *args, **kwargs):
+        if request.COOKIES.get("refresh_token"):
+            enforce_csrf(request)
         data = request.data.copy()
         data.setdefault("refresh", request.COOKIES.get("refresh_token"))
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        response = Response(serializer.validated_data, status=status.HTTP_200_OK)
-        if response.status_code == status.HTTP_200_OK:
-            response.set_cookie(
-                "access_token",
-                response.data["access"],
-                httponly=True,
-                secure=not settings.DEBUG,
-                samesite=settings.AUTH_COOKIE_SAMESITE,
-            )
+        response = Response(
+            {"detail": "Sesión actualizada correctamente."},
+            status=status.HTTP_200_OK,
+        )
+        _set_auth_cookies(response, serializer.validated_data)
         return response
 
 
@@ -64,6 +91,8 @@ class LogoutView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        if request.COOKIES.get("access_token") or request.COOKIES.get("refresh_token"):
+            enforce_csrf(request)
         refresh_token = request.COOKIES.get("refresh_token")
         if refresh_token:
             try:
@@ -75,6 +104,14 @@ class LogoutView(APIView):
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
+
+
+class CsrfTokenView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        token = get_token(request)
+        return Response({"csrf_token": token})
 
 
 class MeView(generics.RetrieveUpdateAPIView):
@@ -93,6 +130,8 @@ class ChangePasswordView(APIView):
         serializer.is_valid(raise_exception=True)
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save(update_fields=["password"])
+        for token in OutstandingToken.objects.filter(user=request.user):
+            BlacklistedToken.objects.get_or_create(token=token)
         return Response({"detail": "Contraseña actualizada correctamente."})
 
 
@@ -100,6 +139,8 @@ class BootstrapAdminView(APIView):
     """Crea una sola vez el superusuario inicial en Render Free."""
 
     permission_classes = (AllowAny,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "bootstrap"
 
     def post(self, request):
         expected_token = getattr(settings, "BOOTSTRAP_ADMIN_TOKEN", "")
