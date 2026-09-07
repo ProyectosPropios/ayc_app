@@ -19,8 +19,12 @@ jobs:
         run: >-
           docker run --rm
           -e DEBUG=0
+          -e SECURE_SSL_REDIRECT=0
+          -e SECURE_HSTS_SECONDS=0
           -e SECRET_KEY=ci-only-secret-key-for-tests-32-bytes
           -e URL_DB=sqlite:////tmp/ayc-ci.sqlite3
+          -e EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend
+          -e EMAIL_DELIVERY_ENABLED=1
           -e PUSHER_ENABLED=0
           ayc-api:test
           sh -c "python manage.py check && python manage.py test"

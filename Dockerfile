@@ -30,7 +30,7 @@ COPY docker/entrypoint.sh /entrypoint.sh
 
 # Los archivos estaticos quedan dentro de la imagen para que Render los sirva
 # tambien en los procesos que no tienen un volumen compartido.
-RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput --settings=ayc_api.settings
 
 RUN addgroup --system app \
     && adduser --system --ingroup app app \
@@ -42,4 +42,4 @@ USER app
 
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "exec gunicorn ayc_api.wsgi:application --bind 0.0.0.0:${PORT:-10000} --workers 3 --timeout 120"]
+CMD ["sh", "-c", "exec gunicorn --env DJANGO_SETTINGS_MODULE=ayc_api.settings ayc_api.wsgi:application --bind 0.0.0.0:${PORT:-10000} --workers 3 --timeout 120"]

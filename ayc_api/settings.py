@@ -90,14 +90,45 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ayc_api.wsgi.application'
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=env(
-            'DATABASE_URL',
-            default=env('URL_DB', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+database_url = env('DATABASE_URL', default='').strip()
+if not database_url:
+    database_url = env('URL_DB', default='').strip()
+
+# SQLite is convenient for local development, but must never be used silently
+# in a deployed Render service. An empty DATABASE_URL makes dj-database-url
+# return Django's dummy backend, which only fails later during migrations.
+if not database_url:
+    if RENDER_EXTERNAL_HOSTNAME or not DEBUG:
+        raise ImproperlyConfigured(
+            'DATABASE_URL debe estar configurada en produccion. '
+            'Vincula el servicio con Render Postgres mediante fromDatabase.'
         )
+    database_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+
+try:
+    # Parseamos la URL que ya seleccionamos arriba. Usar config() aqui
+    # volveria a leer DATABASE_URL directamente desde os.environ y podria
+    # ignorar el fallback si Render la deja definida pero vacia.
+    database_config = dj_database_url.parse(
+        database_url,
+        conn_max_age=600,
     )
-}
+except (TypeError, ValueError) as exc:
+    raise ImproperlyConfigured(
+        'DATABASE_URL no contiene una URL de base de datos valida. '
+        'En Render usa la Internal Database URL de ayc-api-db.'
+    ) from exc
+if not database_config.get('ENGINE'):
+    raise ImproperlyConfigured(
+        'DATABASE_URL no contiene una URL de base de datos valida. '
+        'En Render usa la Internal Database URL de ayc-api-db.'
+    )
+if RENDER_EXTERNAL_HOSTNAME and database_config['ENGINE'] != 'django.db.backends.postgresql':
+    raise ImproperlyConfigured(
+        'En Render DATABASE_URL debe apuntar a PostgreSQL, no a SQLite.'
+    )
+
+DATABASES = {'default': database_config}
 
 AUTH_USER_MODEL = 'users.User'
 
