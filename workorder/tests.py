@@ -75,6 +75,21 @@ class WorkOrderTests(TestCase):
             ).exists()
         )
 
+    def test_admin_can_change_status_and_notify_assigned_technician(self):
+        self.client.force_authenticate(self.admin)
+        create_response = self.client.post("/api/work-orders/", self.payload, format="json")
+        order_url = f"/api/work-orders/{create_response.data['id']}/"
+
+        response = self.client.patch(order_url, {"status": "realizado"}, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.technician,
+                notification_type=Notification.Type.WORK_ORDER_STATUS,
+            ).exists()
+        )
+
     def test_technician_cannot_create_work_orders(self):
         self.client.force_authenticate(self.technician)
         response = self.client.post("/api/work-orders/", self.payload, format="json")

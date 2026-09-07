@@ -22,9 +22,10 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY requirements.lock .
-RUN python -m pip install --no-cache-dir -r requirements.lock
+RUN python -m pip install --no-cache-dir --require-hashes -r requirements.lock
 
 COPY manage.py ./
+COPY .coveragerc ./
 COPY ayc_api ./ayc_api
 COPY core ./core
 COPY customer ./customer

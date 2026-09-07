@@ -60,6 +60,25 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Build test image
+        run: docker build --tag ayc-api:sonar .
+
+      - name: Generate Python coverage
+        run: |
+          mkdir -p coverage
+          docker run --rm --user root \
+            -v "${{ github.workspace }}/coverage:/coverage" \
+            -e DEBUG=0 \
+            -e SECURE_SSL_REDIRECT=0 \
+            -e SECURE_HSTS_SECONDS=0 \
+            -e SECRET_KEY=ci-only-secret-key-for-tests-32-bytes \
+            -e URL_DB=sqlite:////tmp/ayc-ci.sqlite3 \
+            -e EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend \
+            -e EMAIL_DELIVERY_ENABLED=1 \
+            -e PUSHER_ENABLED=0 \
+            ayc-api:sonar \
+            sh -c "python manage.py check && coverage run --rcfile=.coveragerc manage.py test && coverage xml --rcfile=.coveragerc -o /coverage/coverage.xml"
+
       - name: SonarQube Cloud Scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
         env:
@@ -69,3 +88,4 @@ jobs:
             -Dsonar.projectKey=ProyectosPropios_ayc_app
             -Dsonar.organization=proyectospropios
             -Dsonar.sources=.
+            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml

@@ -140,6 +140,20 @@ class AuthenticationTests(TestCase):
         self.technician.refresh_from_db()
         self.assertTrue(self.technician.check_password("NuevaTecnico456!"))
 
+    def test_change_password_rejects_incorrect_current_password(self):
+        self.client.force_authenticate(self.technician)
+        response = self.client.post(
+            "/api/auth/change-password/",
+            {
+                "current_password": "ContraseñaIncorrecta123!",
+                "new_password": "NuevaTecnico456!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("current_password", response.data)
+
 
 class BootstrapAdminTests(TestCase):
     @override_settings(BOOTSTRAP_ADMIN_TOKEN="bootstrap-test-token")
