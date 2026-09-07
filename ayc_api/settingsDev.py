@@ -1,4 +1,13 @@
-from .settings import *
+from . import settings as base_settings
+
+# Reutiliza la configuración común sin importar símbolos con wildcard.
+for _setting_name in dir(base_settings):
+    if _setting_name.isupper():
+        globals()[_setting_name] = getattr(base_settings, _setting_name)
+
+BASE_DIR = base_settings.BASE_DIR
+env = base_settings.env
+dj_database_url = base_settings.dj_database_url
 
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]

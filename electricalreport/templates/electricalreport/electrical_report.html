@@ -18,6 +18,7 @@
     .contact-cell strong { color: #123e73; font-size: 8.4pt; }
     .title { border: 1px solid #123e73; color: #123e73; font-size: 13pt; font-weight: bold; letter-spacing: .3pt; padding: 3.2mm 2mm; text-align: center; }
     table { border-collapse: collapse; width: 100%; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     .info-table { margin-bottom: 2.2mm; table-layout: fixed; }
     .info-table td { border: .7px solid #5f6f82; height: 5.6mm; padding: 1mm 1.3mm; vertical-align: middle; }
     .label { background: #eaf1f8; color: #1b2f46; font-weight: bold; white-space: nowrap; }
@@ -50,6 +51,7 @@
 </head>
 <body>
   <table class="header">
+    <thead class="sr-only"><tr><th scope="col" colspan="2">Identidad y datos de contacto de A&amp;C Soluciones</th></tr></thead>
     <tr>
       <td class="brand-cell">
         {% if company_logo_url %}
@@ -71,6 +73,7 @@
   <div class="title">MANTENIMIENTO DE EQUIPOS</div>
 
   <table class="info-table">
+    <thead class="sr-only"><tr><th scope="col">Campo</th><th scope="col">Valor</th><th scope="col">Campo</th><th scope="col">Valor</th><th scope="col">Campo</th><th scope="col">Valor</th></tr></thead>
     <tr><td class="label label-a">FECHA</td><td class="value-a">{{ report.report_date|date:"d/m/Y" }}</td><td class="label label-b">ENCARGADO(A):</td><td class="value-b" colspan="3">{{ report.responsible_name }}</td></tr>
     <tr><td class="label label-a">CLIENTE</td><td class="value-a">{{ customer.name }}</td><td class="label label-b">DIRECCIÓN:</td><td class="value-b" colspan="3">{{ customer.address }}</td></tr>
     <tr><td class="label label-a">CIUDAD</td><td class="value-a">{{ customer.city }}</td><td class="label label-b">TELÉFONO:</td><td class="value-b" colspan="3">{{ customer.phone }}</td></tr>
@@ -91,6 +94,7 @@
   <div class="observations">{{ report.general_observations|linebreaksbr }}</div>
 
   <table class="signatures">
+    <thead class="sr-only"><tr><th scope="col">Técnico</th><th scope="col">Persona que recibe</th></tr></thead>
     <tr>
       <td><div class="signature-box">{% if report.technician_signature %}<img src="{{ report.technician_signature }}" alt="Firma del técnico">{% endif %}</div><div class="signature-line"></div><div class="signature-label">TÉCNICO</div><div class="signature-name">{{ report.technician_name }}</div></td>
       <td><div class="signature-box">{% if report.recipient_signature %}<img src="{{ report.recipient_signature }}" alt="Firma del recibido">{% endif %}</div><div class="signature-line"></div><div class="signature-label">RECIBÍ</div><div class="signature-name">{{ report.received_by }}</div></td>

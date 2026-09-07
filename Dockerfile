@@ -22,10 +22,18 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip \
-    && python -m pip install -r requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY manage.py ./
+COPY ayc_api ./ayc_api
+COPY core ./core
+COPY customer ./customer
+COPY electricalreport ./electricalreport
+COPY generalreport ./generalreport
+COPY notification ./notification
+COPY pumpingreport ./pumpingreport
+COPY users ./users
+COPY workorder ./workorder
 COPY docker/entrypoint.sh /entrypoint.sh
 
 # Los archivos estaticos quedan dentro de la imagen para que Render los sirva
