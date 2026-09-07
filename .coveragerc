@@ -2,21 +2,16 @@
 branch = True
 relative_files = True
 source =
-    ayc_api
-    core
-    customer
-    electricalreport
-    generalreport
-    notification
-    pumpingreport
-    users
-    workorder
+    .
 
 [report]
 omit =
     */migrations/*
     */tests.py
     */test_*.py
+    manage.py
+    .venv/*
+    venv/*
 
 [xml]
 output = coverage.xml
