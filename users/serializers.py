@@ -57,7 +57,9 @@ class ChangePasswordSerializer(serializers.Serializer):
             email=self.context["request"].user.email,
             password=attrs["current_password"],
         ):
-            raise serializers.ValidationError({"current_password": "La contraseña actual no es correcta."})
+            raise serializers.ValidationError(
+                {"current_password": "La contraseña actual no es correcta."}  # NOSONAR: es el nombre del campo, no una credencial.
+            )
         return attrs
 
 

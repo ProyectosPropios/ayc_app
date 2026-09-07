@@ -82,7 +82,7 @@
   </table>
 
   <table class="inspection-table">
-    <thead><tr><th class="check-name">VERIFICACIÓN</th><th class="check-status">VISTO</th><th class="check-observation">OBSERVACIONES</th></tr></thead>
+    <thead><tr><th scope="col" class="check-name">VERIFICACIÓN</th><th scope="col" class="check-status">VISTO</th><th scope="col" class="check-observation">OBSERVACIONES</th></tr></thead>
     <tbody>
       {% for item in inspection_items %}
       <tr><td class="check-name">{{ item.label }}</td><td class="check-status {% if item.status == 'OK' %}ok{% else %}no{% endif %}">{{ item.status }}</td><td class="check-observation">{{ item.observation }}</td></tr>
