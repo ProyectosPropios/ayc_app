@@ -8,6 +8,7 @@
     * { box-sizing: border-box; }
     body { color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 7pt; margin: 0; }
     table { border-collapse: collapse; width: 100%; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     .header { margin-bottom: 3mm; }
     .header td { vertical-align: middle; }
     .brand-cell { width: 35%; }
@@ -51,6 +52,7 @@
 </head>
 <body>
   <table class="header">
+    <thead class="sr-only"><tr><th scope="col" colspan="2">Identidad y datos de contacto de A&amp;C Soluciones</th></tr></thead>
     <tr>
       <td class="brand-cell">
         {% if company_logo_url %}
@@ -71,6 +73,7 @@
   <div class="title">REPORTE MANTENIMIENTO DE EQUIPOS DE BOMBEO</div>
 
   <table class="info-table">
+    <thead class="sr-only"><tr><th scope="col">Campo</th><th scope="col">Valor</th><th scope="col">Campo</th><th scope="col">Valor</th></tr></thead>
     <tr><td class="label info-label-a">CLIENTE:</td><td class="info-value-a">{{ customer.name }}</td><td class="label info-label-b">TELÉFONO:</td><td class="info-value-b">{{ customer.phone }}</td></tr>
     <tr><td class="label info-label-a">FECHA:</td><td class="info-value-a">{{ report.report_date|date:"d/m/Y" }}</td><td class="label info-label-b">ATENCIÓN:</td><td class="info-value-b">{{ report.attention }}</td></tr>
   </table>
@@ -78,20 +81,20 @@
   <table class="report-table">
     <thead>
       <tr>
-        <th colspan="4">EQUIPOS EN H.P.</th>
-        <th colspan="2">AMPERAJE</th>
-        <th colspan="2">TEMPERATURA</th>
-        <th colspan="2">RUIDOS</th>
-        <th colspan="2">HUMEDAD</th>
-        <th colspan="2">CONEXIONES ELÉCTRICAS</th>
+        <th scope="colgroup" colspan="4">EQUIPOS EN H.P.</th>
+        <th scope="colgroup" colspan="2">AMPERAJE</th>
+        <th scope="colgroup" colspan="2">TEMPERATURA</th>
+        <th scope="colgroup" colspan="2">RUIDOS</th>
+        <th scope="colgroup" colspan="2">HUMEDAD</th>
+        <th scope="colgroup" colspan="2">CONEXIONES ELÉCTRICAS</th>
       </tr>
       <tr>
-        <th class="wide">PRESIÓN</th><th class="wide">SUMERGIBLES</th><th class="wide">MEDIDA</th><th class="wide">PLACA</th>
-        <th class="wide">MEDIDA</th><th class="wide">PLACA</th>
-        <th class="narrow">NORMAL</th><th class="narrow">RECALENTADA</th>
-        <th class="narrow">NORMAL</th><th class="narrow">FALLAS</th>
-        <th class="narrow">SÍ</th><th class="narrow">NO</th>
-        <th class="narrow">NORMAL</th><th class="narrow">FALLAS</th>
+        <th scope="col" class="wide">PRESIÓN</th><th scope="col" class="wide">SUMERGIBLES</th><th scope="col" class="wide">MEDIDA</th><th scope="col" class="wide">PLACA</th>
+        <th scope="col" class="wide">MEDIDA</th><th scope="col" class="wide">PLACA</th>
+        <th scope="col" class="narrow">NORMAL</th><th scope="col" class="narrow">RECALENTADA</th>
+        <th scope="col" class="narrow">NORMAL</th><th scope="col" class="narrow">FALLAS</th>
+        <th scope="col" class="narrow">SÍ</th><th scope="col" class="narrow">NO</th>
+        <th scope="col" class="narrow">NORMAL</th><th scope="col" class="narrow">FALLAS</th>
       </tr>
     </thead>
     <tbody>
@@ -109,10 +112,12 @@
   </table>
 
   <table class="lower">
+    <thead class="sr-only"><tr><th scope="col">Tanque hidroneumático</th><th scope="col">Controlador de velocidad</th><th scope="col">Observaciones</th></tr></thead>
     <tr>
       <td style="width: 37%;">
         <div class="section-title">TANQUE HIDRONEUMÁTICO</div>
         <table class="equipment-details">
+          <thead class="sr-only"><tr><th scope="col">Campo</th><th scope="col">Valor</th></tr></thead>
           <tr><td class="label">MARCA</td><td>{{ report.hydropneumatic_tank_brand }}</td></tr>
           <tr><td class="label">CARGA DETERMINADA</td><td>{{ report.hydropneumatic_tank_determined_charge }}</td></tr>
           <tr><td class="label">CARGA MEDIDA</td><td>{{ report.hydropneumatic_tank_measured_charge }}</td></tr>
@@ -120,13 +125,13 @@
       </td>
       <td style="width: 25%;">
         <div class="section-title">CONTROLADOR DE VELOCIDAD</div>
-        <table class="equipment-details"><tr><td class="label">MARCA</td><td>{{ report.speed_controller_brand }}</td></tr></table>
+        <table class="equipment-details"><thead class="sr-only"><tr><th scope="col">Campo</th><th scope="col">Valor</th></tr></thead><tr><td class="label">MARCA</td><td>{{ report.speed_controller_brand }}</td></tr></table>
       </td>
       <td style="width: 38%;"><div class="section-title">OBSERVACIONES:</div><div class="observations">{{ report.observations|linebreaksbr }}</div></td>
     </tr>
   </table>
 
-  <table class="signature"><tr><td>{% if report.technician_signature %}<img class="signature-image" src="{{ report.technician_signature }}" alt="Firma del técnico">{% endif %}<div class="signature-line"></div><div class="signature-label">TÉCNICO</div><div>{{ report.technician_name }}</div></td></tr></table>
+  <table class="signature"><thead class="sr-only"><tr><th scope="col">Técnico</th></tr></thead><tr><td>{% if report.technician_signature %}<img class="signature-image" src="{{ report.technician_signature }}" alt="Firma del técnico">{% endif %}<div class="signature-line"></div><div class="signature-label">TÉCNICO</div><div>{{ report.technician_name }}</div></td></tr></table>
 
   <div class="footer">
     <p>A&amp;C SOLUCIONES HIDROELÉCTRICAS SAS</p>

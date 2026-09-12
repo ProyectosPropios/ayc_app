@@ -19,8 +19,10 @@ from django.db import connection
 from django.db.utils import OperationalError
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.decorators.http import require_GET
 
 
+@require_GET
 def health_check(request):
     """Endpoint used by Render to verify that the API and database are ready."""
     try:

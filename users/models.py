@@ -80,6 +80,5 @@ class User(AbstractBaseUser, PermissionsMixin):
         ordering = ["last_name", "first_name", "email"]
 
     def save(self, *args, **kwargs):
-        # Todo administrador debe poder entrar al panel de Django.
         self.is_staff = self.role == self.Role.ADMIN or self.is_superuser
         super().save(*args, **kwargs)

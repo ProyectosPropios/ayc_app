@@ -33,7 +33,18 @@ class UserCreationForm(forms.ModelForm):
 class UserChangeForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = "__all__"
+        fields = (
+            "email",
+            "password",
+            "first_name",
+            "last_name",
+            "role",
+            "is_staff",
+            "is_active",
+            "is_superuser",
+            "groups",
+            "user_permissions",
+        )
 
 
 @admin.register(User)

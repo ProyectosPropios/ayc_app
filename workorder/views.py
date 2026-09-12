@@ -57,11 +57,12 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             )
 
         if order.status != previous_status:
-            recipients = (
-                User.objects.filter(role=User.Role.ADMIN, is_active=True)
-                if self.request.user.role != User.Role.ADMIN
-                else ([order.technician] if order.technician else [])
-            )
+            if self.request.user.role != User.Role.ADMIN:
+                recipients = User.objects.filter(role=User.Role.ADMIN, is_active=True)
+            elif order.technician:
+                recipients = [order.technician]
+            else:
+                recipients = []
             for recipient in recipients:
                 if recipient:
                     notify_user(

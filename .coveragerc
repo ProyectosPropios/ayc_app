@@ -1,0 +1,17 @@
+[run]
+branch = True
+relative_files = True
+source =
+    .
+
+[report]
+omit =
+    */migrations/*
+    */tests.py
+    */test_*.py
+    manage.py
+    .venv/*
+    venv/*
+
+[xml]
+output = coverage.xml

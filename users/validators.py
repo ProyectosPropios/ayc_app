@@ -22,7 +22,7 @@ def validate_strong_password(password):
 class StrongPasswordValidator:
     """Adaptador para el sistema AUTH_PASSWORD_VALIDATORS de Django."""
 
-    def validate(self, password, user=None):
+    def validate(self, password, _user=None):
         validate_strong_password(password)
 
     def get_help_text(self):
