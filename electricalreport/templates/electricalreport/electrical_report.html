@@ -19,6 +19,7 @@
     .title { border: 1px solid #123e73; color: #123e73; font-size: 13pt; font-weight: bold; letter-spacing: .3pt; padding: 3.2mm 2mm; text-align: center; }
     table { border-collapse: collapse; width: 100%; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    table > thead.sr-only { display: none; }
     .info-table { margin-bottom: 2.2mm; table-layout: fixed; }
     .info-table td { border: .7px solid #5f6f82; height: 5.6mm; padding: 1mm 1.3mm; vertical-align: middle; }
     .label { background: #eaf1f8; color: #1b2f46; font-weight: bold; white-space: nowrap; }
@@ -47,6 +48,9 @@
     .signature-name { margin-top: .7mm; }
     .footer { border-top: 1px solid #123e73; color: #123e73; font-size: 6.2pt; font-weight: bold; margin-top: 5mm; padding-top: 2mm; text-align: center; }
     .footer p { margin: .7mm 0; }
+    .signatures > thead {
+      display: none;
+    }
   </style>
 </head>
 <body>
