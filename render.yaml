@@ -15,7 +15,7 @@ services:
       - fromGroup: ayc-free
       - key: DATABASE_URL
         fromDatabase:
-          name: ayc-api-db
+          name: ayc-api-db-new
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
@@ -47,7 +47,7 @@ services:
         value: soluciones_1_xkf6ad
 
 databases:
-  - name: ayc-api-db
+  - name: ayc-api-db-new
     region: ohio
     plan: free
     postgresMajorVersion: "16"
